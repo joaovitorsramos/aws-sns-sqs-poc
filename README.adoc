@@ -213,6 +213,7 @@ AWS SNS wont be able to deliver the message to its consumer since the service is
 
 
 == Cleaning up
+
 === Delete infrastructure and lambda function
 
 Run 
