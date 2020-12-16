@@ -19,10 +19,6 @@ functions:
   
 resources:
  Resources:
-    OrdersDeadLetterQueue: 
-      Type: AWS::SQS::Queue
-      Properties: 
-        QueueName: OrdersDeadLetterQueue
     SNSSQSPermission:
       Type: AWS::SQS::QueuePolicy
       Properties:
