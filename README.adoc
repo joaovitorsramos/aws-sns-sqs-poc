@@ -6,7 +6,7 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 
-= AWS SNS PoC
+= AWS SNS + SQS PoC
 :toc:
 
 

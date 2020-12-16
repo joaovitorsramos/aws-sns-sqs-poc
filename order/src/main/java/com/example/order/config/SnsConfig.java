@@ -21,7 +21,7 @@ import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 
 @Configuration
 @ConditionalOnClass("org.springframework.web.servlet.config.annotation.WebMvcConfigurer")
-public class SnsWebConfiguration implements WebMvcConfigurer {
+public class SnsConfig implements WebMvcConfigurer {
 
 	@Autowired
 	private AmazonSNS amazonSns;

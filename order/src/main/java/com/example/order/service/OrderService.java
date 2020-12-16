@@ -11,8 +11,6 @@ import com.example.order.domain.Status;
 import com.example.order.exception.OrderNotFoundException;
 import com.example.order.repository.OrderItemRepository;
 import com.example.order.repository.OrderRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class OrderService {
@@ -32,15 +30,9 @@ public class OrderService {
 		order.setStatus(Status.APPROVAL_PENDING);
 		order.getOrderItems().stream().forEach(i -> i.setItemStatus(Status.APPROVAL_PENDING));
 		logger.info("saving record of {}", order);
-		order = orderRepository.save(order);
-		String orderJSON = null;
-		try {
-			orderJSON = new ObjectMapper().writeValueAsString(order);
-		} catch (JsonProcessingException e) {
-			logger.warn("Exception converting order object to JSON string. Exception: {} ", e);
-		}
+		order = orderRepository.save(order);	
 		logger.info("publishing message {} to AWS SNS", order);
-		messagingTemplate.sendNotification("orderCreated", orderJSON, "Order Created");
+		messagingTemplate.sendNotification("qa-orderCreated", order, "Order Created");
 		return order;
 	}
 	
