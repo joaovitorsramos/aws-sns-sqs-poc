@@ -109,7 +109,7 @@ Inside `/messaging-infrastructure/order/topics/` run the following commands to c
 
 === Create the AWS SQS queus 
 
-Inside `/messaging-infrastructure/order/topics/` run the following commands to create a Terraform Workspace and a new queue `stockConsumerForOrderCreated`
+Inside `/messaging-infrastructure/stock/order-consumers/` run the following commands to create a Terraform Workspace and a new queue `stockConsumerForOrderCreated`
 
 	$ terraform init
 	$ terraform workspace new qa-stock-order-consumers
@@ -184,7 +184,9 @@ Check that the stock of ibuprofen is 190, since the order reserved 10 itens (it 
 
 === Error handling with the deadletter queue
 
-Stop the `stock service`
+Edit the Class `OrderCreatedConsumer` int the `Stock Service` and add:
+
+	throw new Exception("Problem consuming the message");
 
 Create and order
 
