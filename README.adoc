@@ -14,7 +14,7 @@ endif::[]
 image:poc-image.png[poc, title="poc"]
 
 
-== Pre Work 
+== Pre work 
 
 .AWS CLI, Serverless Framework and Terraform
 [%collapsible]
@@ -83,7 +83,7 @@ To see which version of serverless you have installed run:
 
 ====
 
-== Messaging Infraestructure Directory
+== Messaging infraestructure directory
 
 image:message-infra-image.png[message-infra, title="message-infra"]
 
@@ -97,7 +97,7 @@ The https://github.com/joaovitorsramos/aws-sns-sqs-poc/tree/master/messaging-inf
 The same applies for the `stockConsumerForOrderCreated` queue.  `Stock Service` is responsible for consuming messages from `stockConsumerForOrderCreated` queue, therefore, the creation of this queue is in a Terraform file inside stock folder. 
 
 
-== Getting Started
+== Getting started
 
 === Create the AWS SNS topic
 
@@ -107,7 +107,7 @@ Inside `/messaging-infrastructure/order/topics/` run the following commands to c
 	$ terraform workspace new qa-order-topics
 	$ terraform apply
 
-=== Create the AWS SQS Queus 
+=== Create the AWS SQS queus 
 
 Inside `/messaging-infrastructure/order/topics/` run the following commands to create a Terraform Workspace and a new queue `stockConsumerForOrderCreated`
 
@@ -211,6 +211,8 @@ Create and order
 
 AWS SNS wont be able to deliver the message to its consumer since the service is not running. Therefore, after the configured retries, the message will be delivered to its deadletter queue (it is possible to check the message in the AWS console in `stockConsumerForOrderCreated_DLQ`)
 
+
+== Cleaning up
 === Delete infrastructure and lambda function
 
 Run 
