@@ -16,7 +16,7 @@ image:poc-image.png[poc, title="poc"]
 
 == Pre Work 
 
-.AWS CLI, Serverless Framework and Ngrok
+.AWS CLI, Serverless Framework and Terraform
 [%collapsible]
 ====
 
@@ -76,21 +76,48 @@ To see which version of serverless you have installed run:
 
 	$ serverless --version
 
-.Installing Ngrok
 
-Ngrok is used to expose localhost endpoint in the internet. Install ngrok following the guide in https://ngrok.com[ngrok].
+.Install Terraform (this project uses Terraform 0.12.28)
+
+	$ brew install terraform
 
 ====
+
+== Messaging Infraestructure Directory
+
+image:message-infra-image.png[message-infra, title="message-infra"]
+
+The https://github.com/joaovitorsramos/aws-sns-sqs-poc/tree/master/messaging-infrastructure[messaging-infrastructure] directory contains the necessary Terraform files for provisioning the topics and the Queues.
+
+TIP: To have publishers and consumers fully decoupled from each other, ideally the publisher should know only about the topic (not the queues), and the consumers should know only about the queues (not the topic). Therefore, creating the topic and queues should not be responsibility of publishers and consumers. In that case, topic and queues will be created beforehand using Terraform.
+
+
+The https://github.com/joaovitorsramos/aws-sns-sqs-poc/tree/master/messaging-infrastructure[messaging-infrastructure] directory is divided into folders of *resource owners*. In this example, `Order Service` is responsible for publishing messages to `orderCreated` topic, therefore, the creation of this topic is in a Terraform file inside order folder. 
+
+The same applies for the `stockConsumerForOrderCreated` queue.  `Stock Service` is responsible for consuming messages from `stockConsumerForOrderCreated` queue, therefore, the creation of this queue is in a Terraform file inside stock folder. 
 
 
 == Getting Started
 
-=== Create SNS topic
+=== Create the AWS SNS topic
 
-	$ aws sns create-topic --name "orderCreated"
+Inside `/messaging-infrastructure/order/topics/` run the following commands to create a Terraform Workspace and a new topic `orderCreated`
 
+	$ terraform init
+	$ terraform workspace new qa-order-topics
+	$ terraform apply
 
-=== Create the lambda function, subscriber and the dead letter queue
+=== Create the AWS SQS Queus 
+
+Inside `/messaging-infrastructure/order/topics/` run the following commands to create a Terraform Workspace and a new queue `stockConsumerForOrderCreated`
+
+	$ terraform init
+	$ terraform workspace new qa-stock-order-consumers
+	$ terraform apply
+
+=== Create the lambda function 
+
+Inside `/lambda-orderConsumer/` run the
 
 	$ sls deploy
 
@@ -100,30 +127,11 @@ Inside the folders `/microservices/order/` and `/microservices/stock/` run
 
 	$ mvn spring-boot:run	
 
-
-After installing ngrok, run:
-
-	$ ./ngrok authtoken your_token
-
-Expose the `localhost:8081/events/orderCreatedSubscriber` running
-
-	$ ./ngrok http http://localhost:8081
-
-Save the url provide from ngrok:
-
-	http://XXXXXX.ngrok.io -> http://localhost:8081  
-
-Create a subscriber for the stock service
-
-	$ aws sns subscribe \
-  --topic-arn arn:aws:sns:YOUR_REGION:YOUR_ACCONT_ID:orderCreated  \
-  --protocol http \
-  --notification-endpoint http://XXXXX.ngrok.io/events/orderCreated/ \
-  --attributes '{"RedrivePolicy":"{\"deadLetterTargetArn\":\"arn:aws:sqs:YOUR_REGION:YOUR_ACCONT_ID:OrdersDeadLetterQueue\"}"}'
-
 == Testing
 
-Fill the stock
+=== Publishing and subscribing to messages 
+
+Fill the stock with itens to approve the order
 
 	$ curl --location --request PUT 'http://localhost:8081/stock' \
 	--header 'Content-Type: application/json' \
@@ -169,13 +177,45 @@ Create and order
 
 Check the CloudWatch log events of the lambda functions to see the printed order.
 
-Check that the stock of ibuprofen is 190, since the order reserved 10 itens:
+Check that the stock of ibuprofen is 190, since the order reserved 10 itens (it is possible to see in the logs of `stock` service that the order was processed and the stock was updated):
 
 	$ curl --location --request GET 'http://localhost:8081/stock/456_ibuprofen'
 
 
-=== Delete deployed serverless stack
+=== Error handling with the deadletter queue
 
+Stop the `stock service`
+
+Create and order
+
+	$ curl --location --request POST 'http://localhost:8080/orders' \
+	--header 'Content-Type: application/json' \
+	--data-raw '{
+			"orderId": "4444",
+			"customerId": "11111",
+			"walletId": "101010",
+			"orderItems":[
+				{
+				"sku": "123_aspirin",
+				"amount": "10",
+				"branchId": "1212",
+				"cost": "100"
+				},{
+				"sku": "456_ibuprofen",
+				"amount": "10",
+				"branchId": "1212",
+				"cost": "50"
+				}
+			]
+		}'
+
+AWS SNS wont be able to deliver the message to its consumer since the service is not running. Therefore, after the configured retries, the message will be delivered to its deadletter queue (it is possible to check the message in the AWS console in `stockConsumerForOrderCreated_DLQ`)
+
+=== Delete infrastructure and lambda function
+
+Run 
+
+	$ terraform destroy
 	$ sls remove
 
 
